@@ -12,7 +12,6 @@
             padding: 0;
             box-sizing: border-box;
         }
-
         body {
             display: flex;
             justify-content: center;
@@ -20,14 +19,12 @@
             min-height: 100vh;
             background: #f0f0f0;
         }
-
         .grid-container {
             width: 90vw;
             height: 80vh;
             position: relative;
             overflow: hidden;
         }
-
         .grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
@@ -37,27 +34,24 @@
             height: 100%;
             transition: all 0.3s ease;
         }
-
         .grid-item {
             position: relative;
             overflow: hidden;
             cursor: pointer;
         }
-
         .grid-item img {
             width: 100%;
             height: 100%;
             object-fit: cover;
             transition: all 0.3s ease;
         }
-
         .expanded {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 800px;
-            height: 600px;
+            width: 80vw;
+            max-height: 90vh;
             z-index: 100;
             background: white;
             border-radius: 8px;
@@ -65,18 +59,15 @@
             display: flex;
             flex-direction: column;
         }
-
         .expanded img {
             width: 100%;
             height: auto;
-            max-height: calc(100% - var(--text-height));
+            max-height: 50vh;
             object-fit: contain;
         }
-
         .text-overlay {
             display: none;
         }
-
         .expanded .text-overlay {
             display: block;
             position: relative;
@@ -90,7 +81,6 @@
             text-align: left;
             opacity: 1;
         }
-
         .expanded .text-overlay::before {
             content: '';
             position: absolute;
@@ -100,7 +90,6 @@
             width: 40px;
             background-color: #192b61;
         }
-
         .overlay {
             position: fixed;
             top: 0;
@@ -112,7 +101,6 @@
             pointer-events: none;
             transition: opacity 0.3s ease;
         }
-
         .overlay.active {
             opacity: 1;
             pointer-events: auto;
@@ -124,12 +112,10 @@
     <div class="grid" id="imageGrid"></div>
 </div>
 <div class="overlay" id="overlay"></div>
-
 <script>
     const imageGrid = document.getElementById('imageGrid');
     const overlay = document.getElementById('overlay');
     const totalImages = 56;
-
     // Text content for each image
     const imageTexts = [
         {
@@ -284,7 +270,6 @@
             description: "\"My mum is the person who I look up to the most. She is the strongest woman I have ever met and she never fails to amaze me with how she handles every situation. I love her and appreciate her the most.\" — Bella Clause, Reporter",
             photoCredit: "Photo courtesy of Bella Clause"
         },
-
         {
             description: '"I want to celebrate my sister, because she is a great person, and I really value having a bond like that in my life. She never fails to make me laugh, and inspires me in so many different ways." — Sanna Ekroth, Reporter',
             photoCredit: "Photo courtesy of Sanna Ekroth"
@@ -357,65 +342,47 @@
             description: '"I admire my mom, Michelle Waterman, because she can somehow juggle everything. She works full time while simultaneously being a mother and wife full time. Not only does she do all of this but she does it amazingly. I wish to grow up and be able to be half the person she is." — Antonia Waterman, Contributor',
             photoCredit: "Photo courtesy of Antonia Waterman"
         },
-
     ];
-
     // Create grid items
     for (let i = 1; i <= totalImages; i++) {
         const gridItem = document.createElement('div');
         gridItem.className = 'grid-item';
-
         const img = document.createElement('img');
         img.src = `https://raw.githubusercontent.com/EXIBIST32132/imagesStandard/main/${i}.png`;
-        gridItem.appendChild(img);
-
-        gridItem.addEventListener('click', () => expandImage(i));
-
-        imageGrid.appendChild(gridItem);
-    }
-
-    function expandImage(index) {
-        const gridItem = document.createElement('div');
-        gridItem.className = 'expanded';
-
-        const img = document.createElement('img');
-        img.src = `https://raw.githubusercontent.com/EXIBIST32132/imagesStandard/main/${index}.png`;
-
+        img.alt = `Image ${i}`;
         const textOverlay = document.createElement('div');
         textOverlay.className = 'text-overlay';
-
-        const description = document.createElement('p');
-        description.textContent = imageTexts[index - 1].description;
-
-        const credit = document.createElement('p');
-        credit.style.marginTop = '10px';
-        credit.style.fontSize = '0.9em';
-        credit.style.fontStyle = 'italic';
-        credit.textContent = imageTexts[index - 1].photoCredit;
-
-        textOverlay.appendChild(description);
-        textOverlay.appendChild(credit);
-
+        // Create text content with proper formatting
+        if (imageTexts[i - 1]) {
+            const descriptionP = document.createElement('p');
+            descriptionP.textContent = imageTexts[i - 1].description;
+            descriptionP.style.marginBottom = '10px';
+            const creditP = document.createElement('p');
+            creditP.innerHTML = `<em>${imageTexts[i - 1].photoCredit}</em>`;
+            creditP.style.fontSize = '0.9em';
+            creditP.style.marginTop = '10px';
+            textOverlay.appendChild(descriptionP);
+            textOverlay.appendChild(creditP);
+        } else {
+            textOverlay.textContent = `Image ${i} Description`;
+        }
         gridItem.appendChild(img);
         gridItem.appendChild(textOverlay);
-
-        // Calculate text height and set it as a CSS variable
-        requestAnimationFrame(() => {
-            const textHeight = textOverlay.offsetHeight;
-            gridItem.style.setProperty('--text-height', textHeight + 'px');
+        imageGrid.appendChild(gridItem);
+        // Add click event for expansion
+        gridItem.addEventListener('click', function() {
+            this.classList.toggle('expanded');
+            overlay.classList.toggle('active');
         });
-
-        document.body.appendChild(gridItem);
-        overlay.classList.add('active');
-
-        const closeExpandedView = () => {
-            document.body.removeChild(gridItem);
-            overlay.classList.remove('active');
-        };
-
-        overlay.onclick = closeExpandedView;
-        gridItem.onclick = closeExpandedView;
     }
+    // Close expanded image when clicking overlay
+    overlay.addEventListener('click', function() {
+        const expanded = document.querySelector('.expanded');
+        if (expanded) {
+            expanded.classList.remove('expanded');
+            overlay.classList.remove('active');
+        }
+    });
 </script>
 </body>
 </html>
