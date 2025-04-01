@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Image Grid</title>
+    <!-- Add Adobe Fonts -->
+    <link rel="stylesheet" href="https://use.typekit.net/[YOUR-KIT-CODE].css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #f0f0f0;
+        }
+
+        .grid-container {
+            width: 90vw;
+            height: 80vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            gap: 4px;
+            width: 100%;
+            height: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .grid-item {
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .grid-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: all 0.3s ease;
+        }
+
+        .expanded {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80vw;
+            max-height: 90vh;
+            z-index: 100;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .expanded img {
+            width: 100%;
+            height: auto;
+            max-height: 75vh;
+            object-fit: contain;
+        }
+
+        .text-overlay {
+            display: none;
+        }
+
+        .expanded .text-overlay {
+            display: block;
+            position: relative;
+            padding: 30px 20px 20px;
+            background: #e8f2fa;
+            color: #192b61;
+            font-family: "adobe-caslon-pro", serif;
+            font-weight: 600;
+            font-style: normal;
+            font-size: 1.2em;
+            text-align: left;
+            opacity: 1;
+        }
+
+        .expanded .text-overlay::before {
+            content: '';
+            position: absolute;
+            left: 20px;
+            top: 15px;
+            height: 4px;
+            width: 40px;
+            background-color: #192b61;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+    </style>
+</head>
+<body>
+<div class="grid-container">
+    <div class="grid" id="imageGrid"></div>
+</div>
+<div class="overlay" id="overlay"></div>
+
+<script>
+    const imageGrid = document.getElementById('imageGrid');
+    const overlay = document.getElementById('overlay');
+    const totalImages = 56;
+
+    // Text content for each image
+    const imageTexts = [
+        {
+            description: '"I appreciate Mrs. Avery, our journalism adviser, because she has been an unwavering source of support for me and the rest of our staff this year. Whether it was responding to my Google Chats at 11 p.m., answering my many, many questions about edits or simply being there and listening when things got stressful, she has always been there with patience, encouragement and a steady belief in my potential, as well as the staff and publication\'s. Her guidance has helped me grow as both a journalist and a leader, and I wouldn\'t be the person I am today without her." — Sophia Bateman, Editor-in-Chief: Online',
+            photoCredit: "Photo courtesy of Louisa Avery"
+        },
+        {
+            description: '"I look up to my grandma, who I call Oma — the German word for grandma. She is the undeniable matriarch of my family, and is so resilient, kind, and comforting. Every year, I look forward to staying with her. Whether we end up baking Butterkuchen together, harvesting potatoes, or simply having a conversation, I cherish every moment I spend with her. I also admire her for the life she\'s lived. As the long-time mayor of her hometown, Bissendorf, she\'s had an indelible impact the wider community, not just our family. Above all else, she is the best role model I could have ever had, and I am endlessly grateful to be a part of her family :)" — Oskar Doepke, Editor-in-Chief: Print',
+            photoCredit: "Photo courtesy of Oskar Doepke"
+        },
+        {
+            description: '"Even though we live far apart, my aunt is a powerful force of inspiration in my life. She is remarkably resilient, extremely hardworking, and consistently accommodating. I am always excited to visit her in the U.S. because we have a lot of fun together and I can talk to her about anything. She also gives me her old clothes which is an added bonus!" — Tara Behbehani, Deputy Editor-in-Chief: Online',
+            photoCredit: "Photo courtesy of Tara Behbehani"
+        },
+        {
+            description: '"I want to especially acknowledge my mama. She is the strongest woman I know—resilient, selfless, and full of love. No matter what\'s going on in her life, she always drops everything to help me when I need her. I\'m endlessly grateful for her support." — Ella Friel, Deputy Editor-in-Chief: Print',
+            photoCredit: "Photo courtesy of Ella Friel"
+        },
+        {
+            description: '"Mme. Smith taught me as a fifth grader and from my first day in class — as a young, shy 10 year old — she gave me the confidence to rediscover my love for the french language. She\'s a teacher that truly brings the best out of every single one of her students." — Nassef Sawiris, News Editor: Online',
+            photoCredit: "Photo courtesy of Tamara Smith"
+        },
+        {
+            description: '"My mother is the kind of woman who could talk her way out of a traffic ticket while giving you life advice and handing a snack to a stranger - she is always ten steps ahead. She\'s quick on her feet, and sees problems before they fully form and somehow knows exactly how to respond. My mom is also one of the most generous and selfless individuals I\'ve known. Whether it\'s helping a friend who\'s going through something or volunteering her time for people she barely knows, she never acts like she\'s owed anything in return. She never fails to make me laugh; our funniest moments happen when we\'re doing the most ordinary things. I think that\'s why I admire her so much—she makes the everyday feel full of clarity and laughter, without ever trying to be anything other than exactly who she is." — Giulia Scolari, News Editor: Print',
+            photoCredit: "Photo courtesy of Giulia Scolari"
+        },
+        {
+            description: '"My mom has always been an inspiring, supportive and strong presence in my life. Her compassion, honesty and insight make her the best role model I could ask for. I\'m beyond lucky to have such an incredible mother, friend and person to look up to." — Yasmine Rivera, Opinions Editor: Print',
+            photoCredit: "Photo courtesy of Yasmine Rivera"
+        },
+        {
+            description: '"I appreciate my mother who has always taught me the value of hard work and perseverance. I am inspired by her passion in everything she does, and she leads by example with grace and resilience. She is compassionate, thoughtful and strong. She is the best role model I could have asked for." — Sophia Hsu, Features Editor: Online',
+            photoCredit: "Photo courtesy of Sophia Hsu"
+        },
+        {
+            description: '"My little sisters are some of the strongest women I know. They have taught me so much about what love looks like, what family is, and how resilient we can be. My sister Mei is incredibly hard working, optimistic, and loving. She never fails to make me laugh, always takes care of me, and makes life warmer. My sister Coco is one of the most creative, passionate, and curious people I know. She has taught me so much about empathy, kindness, and strength. I learn from my sisters every day, and have been so lucky to grow with them." — Ruby Rogers, Features Editor: Print',
+            photoCredit: "Photo courtesy of Ruby Rogers"
+        },
+        {
+            description: '"One of the most inspiring women in my life is my sister Maya. She reminds me time and time again never to take no for an answer—to be relentless—and to never settle for less than I deserve. Maya puts the people she loves before herself without hesitation; her resilience in facing challenges is something I\'ve always admired. She has always been—and will always be—my source of inspiration." — Zoe Karibian, Arts Editor: Online',
+            photoCredit: "Photo courtesy of Zoe Karibian"
+        },
+        {
+            description: '"I really appreciate my little sister because she is always super supportive and never fails to make me laugh. I am so grateful to have someone I can rely on no matter what and really admire how she puts her all into everything she does. I cannot wait to see all the things she will accomplish in the future." — Annika Skorski, Arts Editor: Print',
+            photoCredit: "Photo courtesy of Annika Skorski"
+        },
+        {
+            description: '"She is a very big advocate for women’s rights and a huge inspiration for many including myself around the globe." — Frank Harriss, Sports Editor: Online',
+            photoCredit: "Photo used with permission of Wikimedia Commons"
+        },
+        {
+            description: '"I really admire Ms. Mears for always being such a supportive and caring advisor. She\'s created such a welcoming classroom environment, and she has always done such a good job at making sure her students feel cared for. Her passion and empathy are really inspiring, and I look up to her as both a teacher and a person." — Audrey Cushman, Sports Editor: Print',
+            photoCredit: "Photo courtesy of Alissa Mears"
+        },
+        {
+            description: '"Ms. Krumich is one of the kindest, most intelligent and sincere people I’ve ever met. Between our “Lads Lunch” discussions and my semester in Dramatic Literature and Performance there is no teacher in the building who I feel more comfortable around, a testament to her immeasurable warmth. She goes out of her way to spread her joy to the environment around her with her smile and energy, and I can hardly think of anyone else more successful at doing so." — Jaden Gardiola, Broadcast Editor',
+            photoCredit: "Photo courtesy of Jaden Gardiola"
+        },
+        {
+            description: '"One of the most inspiring people in my life is my younger sister. Despite being only 15 years old I\'ve never met someone as hardworking, caring, funny and passionate. She has always been the person to get me through difficult days and make me cry with laughter. I admire her ability to have a positive mindset and constantly keeping working to improve and become a better version of herself. I can trust her with anything and I know I will always learn from her." — Laila Taraporevala, Photography Editor',
+            photoCredit: "Photo courtesy of Laila Taraporevala"
+        },
+        {
+            description: '"I admire my mother. No matter how busy her work gets, she makes sure to make time for us; stops whatever she’s doing once we get home and listens to how our day went. She celebrates my achievements as if they were her own, supporting me every step of the way with hugs and kisses. She has such a young soul, and while she tries to show it by stealing my clothes every once in a while, she shows it the most through her smile and laughter. My mum is full of energy, making any moment I spend with her even more special. She has taught me strength, love, and resilience and to never let age define how you take on life. Te quiero, mami." — Nuria Alvarez Martin, Social Media Editor',
+            photoCredit: "Photo courtesy of Nuria Alvarez Martin"
+        },
+        {
+            description: '"My mother is by far the most inspiring woman in my life. She is so hardworking, caring, and kind in all that she does. From helping me in all steps of my life to being a role model to all those around her, she has dedicated herself to all that she has started. When thinking about what to say about her, I find myself speechless; there is no real way of summarizing such an amazing and inspiring person in so few words. I am endlessly grateful to her-the glue of our family, a sunshine to be around, and a support to all those around" — Blu Belinky, Diversity, Equity and Inclusion Editor',
+            photoCredit: "Photo courtesy of Blu Belinky"
+        },
+        {
+            description: '"Mme Smith is a kind and welcoming person who inspires my love for learning. She makes sure everyone feels valued and included, and her passion for teaching and helping others is truly admirable." — Ailish Herrmann, SNN Producer',
+            photoCredit: "Photo courtesy of Alish Herrmann"
+        },
+        {
+            description: '"I admire my mum because she is so hard working and dedicated to her work as a professor while also volunteering at a primary school. She has been a parent for 28 years now and she manages so much, but is always there when my brothers and I want to talk to her. I love laughing with her and she is SO supportive and helpful." — Inez Stephenson, SNN Producer',
+            photoCredit: "Photo courtesy of Inez Stephenson"
+        },
+        {
+            description: '"I admire my mum for being the kindest and most caring woman in the world, she never fails to impress and make our family laugh, I am endlessly lucky to say she is MY mum. I admire Audrey for being so strong, driven, and passionate about everything she does, oh and obviously for being the best Standard editor ever." — Adrian Caillaux Diaz, Media Team',
+            photoCredit: "Photo courtesy of Adrian Caillaux Diaz"
+        },
+        {
+            description: '"I want to celebrate my mom because she has been there for me every step of the way. She has sacrificed her time and her life for me and I could not be more grateful. I love you Mom." — Obalolu Edun, Media Team',
+            photoCredit: "Photo courtesy of Obalolu Edun"
+        },
+        {
+            description: '"I want to celebrate my mother. She has been by my side through all my highs, lows, and everyday moments. I love her in every single heartbeat. She is one of the sweetest person\'s I will ever know. There is not one moment where I don\'t appreciate her, as she is the beacon of my world." — Apollo Gettleman, Media Team',
+            photoCredit: "Photo courtesy of Apollo Gettleman"
+        },
+        {
+            description: '"I admire my mother because she is the embodiment of sacrifice. After studying at Cambridge, she left her job at the World Bank to take care of me. She has made me the person I am today and remains a constant reminder of what it means to live with purpose and selflessness." — Aran Hooda, Media Team',
+            photoCredit: "Photo courtesy of Aran Hooda"
+        },
+        {
+            description: '"I admire my mom because everyday she works hard to support my whole family. She always inspires me to be a better person and I appreciate all she does for me. I hope to someday be as strong and hardworking as she is." — Zoe Kaul, Media Team',
+            photoCredit: "Photo courtesy of Zoe Kaul"
+        },
+        {
+            description: '"My sister adapts to new environments and people so easily, and I admire her flexibility and outgoing nature. With every new person I meet and befriend, I thank my sister for teaching me the value of connecting with others." — Rina Kobayashi, Media Team',
+            photoCredit: "Photo by Rina Kobayashi"
+        },
+        {
+            description: '"I admire my mother, my rock. I have always aspired to be like her: a power woman, an amazing friend, a giving and adventurous soul, and always there for everyone. She is one of the most inspiring people in my life and my lifelong best friend." — Leila Meilman, Media Team',
+            photoCredit: "Photo courtesy of Leila Meilman"
+        },
+        {
+            description: "\"My mom has been and always will be my biggest supporter. She encourages me to give my best effort in everything I do, and supports me. She is my role model and someone who I aspire to be like.\" — Aden Ovenden, Media Team",
+            photoCredit: "Photo courtesy of Aden Ovenden"
+        },
+        {
+            description: "\"My grandma is my true role model in life. She taught me how to get through the hardships of life, what it means to be a girls girl and how to embrace my culture through the activities I love. Whenever someone tells me I remind them of Her, it means the absolute world. Even while she is no longer with us, I find myself continuing to live through her shoes. Whether it is showing admiration for Western culture, loving turquoise jewellery or cooking delicious food for loved ones, I always remember my Nagyi.\" — Noelle Quintin, Media Team",
+            photoCredit: "Photo courtesy of Noelle Quintin"
+        },
+        {
+            description: "\"Ms. Mears is an English teacher whose passion for literature and writing makes her a true inspiration. She approaches teaching with a deep enthusiasm, pushing her students to engage critically with texts and develop their own voices. Her ability to blend analytical depth with a genuine love for storytelling makes her not just an educator, but a role model for anyone who values the power of words.\" — Rania Raj, Media Team",
+            photoCredit: "Photo courtesy of Alissa Mears"
+        },
+        {
+            description: "\"Ms. Putnam comes to school daily with an attitude I admire so much. I love how I can talk to her about many different topics and remain engaged throughout. She balances so much and is empathetic beyond words, and I am so grateful to have her as my teacher and in my life. :)\" — Meher Sareen, Media Team",
+            photoCredit: "Photo courtesy of Christin Putnam"
+        },
+        {
+            description: "\"My mother is the reason I have become the young man I am today. She has shown my sisters and me how to be hardworking, independent, and empathetic. I couldn't be prouder of the work she has done, and I love her very much.\" — Colton Stenson, Media Team",
+            photoCredit: "Photo courtesy of Colton Stenson"
+        },
+        {
+            description: "\"Despite never teaching me, she has always been a resource for me. She is a fantastic listener and observer, and inspires me to smile more each and every day.\" — Theo van Zyl, Media Team",
+            photoCredit: "Photo courtesy of Theo van Zyl"
+        },
+        {
+            description: "\"I admire my mom because she is talented and an incredibly hard worker. She has always been determined, taking on multiple projects and working with many charities. I admire her passion and ability to accomplish anything she sets her mind to. I admire her voice and how she stands by it, fighting for what's right. I admire how she inspires those around her, including myself. She has taught me resilience in the face of challenges, never giving up.\" — Ayra Ansari, Reporter",
+            photoCredit: "Photo courtesy of Ayra Ansari"
+        },
+        {
+            description: "\"She’s a strong and independent woman who is very intelligent and has done a lot in life.\" — Sarah Alvarez Martin, Reporter",
+            photoCredit: "Photo courtesy of Nuria Alvarez Martin"
+        },
+        {
+            description: "\"I am sharing appreciation for my English teacher, Ms. Mears because she is someone that I have become very comfortable opening up to and she never fails to make me smile. I am beyond grateful to have her as a teacher this year.\" — Melisa Atalay, Reporter",
+            photoCredit: "Photo courtesy of Melisa Atalay"
+        },
+        {
+            description: "\"I look up to my mother because she is hardworking, strong and encourages me to challenge myself. Since I was young, she has been and continues to be my biggest inspiration.\" — Amelia Bassi, Reporter",
+            photoCredit: "Photo courtesy of Amelia Bassi"
+        },
+        {
+            description: "\"I admire my sister because she has been a huge role model for me, and always offers guidance and support whenever I need it. Her love and encouragement have shaped me into the person I am today.\" — Raj Chamria, Reporter",
+            photoCredit: "Photo courtesy of Raj Chamria"
+        },
+        {
+            description: "\"My mum is the person who I look up to the most. She is the strongest woman I have ever met and she never fails to amaze me with how she handles every situation. I love her and appreciate her the most.\" — Bella Clause, Reporter",
+            photoCredit: "Photo courtesy of Bella Clause"
+        },
+
+        {
+            description: '"I want to celebrate my sister, because she is a great person, and I really value having a bond like that in my life. She never fails to make me laugh, and inspires me in so many different ways." — Sanna Ekroth, Reporter',
+            photoCredit: "Photo courtesy of Sanna Ekroth"
+        },
+        {
+            description: '"My mom is the most hardworking, strong, intelligent, and kind woman I know. She goes above and beyond for the people she loves and takes care of everyone around her. She balances every aspect of her life with such intention, and I aspire to be just like her." — Gaby Friedman, Reporter',
+            photoCredit: "Photo courtesy of Gaby Friedman"
+        },
+        {
+            description: '"She is a really good teacher and is extremely attentive to students needs and interests. She is considerate of different learning styles and accommodates all her students requirements." — Maya Gillanders, Reporter',
+            photoCredit: "Photo courtesy of Christin Putnam"
+        },
+        {
+            description: '"From my earliest years of childhood to now, my sister has always been the person I\'ve followed in the footsteps of. Her creativity and passion for what she loves is truly admirable and I am so grateful for the motivation and guidance she has given me. I hope she knows as much as I do what great things her future holds." — Emily Iannazzo, Reporter',
+            photoCredit: "Photo courtesy of Emily Iannazzo"
+        },
+        {
+            description: '"One of the most inspiring women I know is Inez Stephenson. She is constantly smiling and makes others laugh hysterically. She is also one of the most hardworking and supportive people I know, and I strive to be like her every single day." — Maya Janssens, Reporter',
+            photoCredit: "Photo courtesy of Maya Janssens"
+        },
+        {
+            description: '"I appreciate my mom because she\'s always been a comforting figure in my life, and since I was born she\'s had to juggle her job with all the duties that come with being a mother. When I was little, I was an extremely clingy child, and it must have taken a lot of patience and love to always be there for me. These days, she still works in Nepal but constantly travels back and forth between Kathmandu and London to see me as much as possible, and I know the amount of travel she does must be exhausting, yet she\'s always excited as ever to get to see me and spend time with me. She\'s an amazing mother and an amazing person." — Biraj Khadka, Reporter',
+            photoCredit: "Photo courtesy of Biraj Khadka"
+        },
+        {
+            description: '"Caitlin Clark is an WNBA player who is one of the main reasons as to why the WNBA and women\'s basketball has gone through a massive growth over the past couple of years. She gets a lot of hate on social media and other WNBA players have made comments that downplay her skill and ability, but she ignores it and focuses on basketball." — Aadvik Navad, Reporter',
+            photoCredit: "Photo used with permission of Wikimedia Commons"
+        },
+        {
+            description: '"My mom is always looking out for me, even if I want her to or not. She is the kindest, most supportive person I have ever met and does so much for everyone around her. I love her so much." — Teresa Ozores Mufarej, Reporter',
+            photoCredit: "Photo courtesy of Teresa Ozores Mufarej"
+        },
+        {
+            description: '"She\'s been a great inspiration to many girls who watch women\'s sports and want to play women\'s sports." — Ethan Rhodes, Reporter',
+            photoCredit: "Photo used with permission of Wikimedia Commons"
+        },
+        {
+            description: '"I look up to my Great Aunt because she is an amazing writer with one of the most colorful vocabularies of anyone I know. She is so witty and intelligent, but also kind and loving. Her presence is very comforting. I aspire to her level of wicked story telling over four o\'clock afternoon tea." — Khady Sao, Reporter',
+            photoCredit: "Photo courtesy of Khady Sao"
+        },
+        {
+            description: '"My mother is the most caring person I know. She has always believed in me, never told me my dreams were too big or unrealistic, and always supported me in all my endeavours. I admire her kindness, selflessness, generosity and all the love she continues to give me. This month, we all honour you and love you." — Alexandra Theofilopoulou, Reporter',
+            photoCredit: "Photo courtesy of Alexandra Theofilopoulou"
+        },
+        {
+            description: '"I admire my sister, Alexandra Theofilopoulou, as although I can bug her at times, I know she is always there for me when I need her most. I constantly marvel at her steadfast work ethic and astonishing compassion for other people, which I believe should serve as an example for us all. With each year we grow closer, I can’t help but think of her profound impact on me as one of my role models and inspirations." — Yiannis Theofilopoulos, Reporter',
+            photoCredit: "Photo courtesy of Yiannis Theofilopoulos"
+        },
+        {
+            description: '"I appreciate my mum because she always gave the the model of a working woman. As a female lawyer in the 90s she faced many hurdles that stopped her from reaching her full potential. She wanted to create a world where I would not have to grow up worrying that there was something I could not do because I am a girl. So throughout my whole childhood she supported me in my journey in STEM, and I owe my continued passion to her." — Lauren Thompson, Reporter',
+            photoCredit: "Photo courtesy of Lauren Thompson"
+        },
+        {
+            description: '"I want to say thank you to my mum for taking care of our sisters. She works hard every day to make sure we are happy and safe. I appreciate everything she does for our family!" — Yonatan Weinstein, Reporter',
+            photoCredit: "Photo courtesy of Yonatan Weinstein"
+        },
+        {
+            description: '"My grandmother is a beautifully idiosyncratic person. From her attempts to force feed me ginseng and 보리차 (a Korean barley tea), to buying our favourite foods despite her heavy workload at Emory, or even telling an eight year old edition of myself scintillating tales of my mother as a child. She truly cares, she\'s not just a grandmother to me, but one to the world. I hope to be able to be able to be half the person she is." — Adrian Frazier-Kim, Contributor',
+            photoCredit: "Photo courtesy of Adrian Frazier-Kim"
+        },
+        {
+            description: '"I want to celebrate Princess Diana because of her extensive work for charity and legacy as an inspirational woman in British history." — Amy Sergeant, Contributor',
+            photoCredit: "Photo courtesy of Amy Sergeant"
+        },
+        {
+            description: '"I admire Ms. Dana because she cares for each child that she teaches and truly makes an effort to get to know each kid. She is an incredible woman, she is an extraordinary English teacher and someone that students can always talk to no matter what." — Yasmin Taraporevala, Contributor',
+            photoCredit: "Photo courtesy of Yasmin Taraporevala"
+        },
+        {
+            description: '"I admire my mom, Michelle Waterman, because she can somehow juggle everything. She works full time while simultaneously being a mother and wife full time. Not only does she do all of this but she does it amazingly. I wish to grow up and be able to be half the person she is." — Antonia Waterman, Contributor',
+            photoCredit: "Photo courtesy of Antonia Waterman"
+        },
+
+    ];
+
+    // Create grid items
+    for (let i = 1; i <= totalImages; i++) {
+        const gridItem = document.createElement('div');
+        gridItem.className = 'grid-item';
+
+        const img = document.createElement('img');
+        img.src = `https://raw.githubusercontent.com/EXIBIST32132/imagesStandard/main/${i}.png`;
+        img.alt = `Image ${i}`;
+
+        const textOverlay = document.createElement('div');
+        textOverlay.className = 'text-overlay';
+
+        // Create text content with proper formatting
+        if (imageTexts[i - 1]) {
+            const descriptionP = document.createElement('p');
+            descriptionP.textContent = imageTexts[i - 1].description;
+            descriptionP.style.marginBottom = '10px';
+
+            const creditP = document.createElement('p');
+            creditP.innerHTML = `<em>${imageTexts[i - 1].photoCredit}</em>`;
+            creditP.style.fontSize = '0.9em';
+            creditP.style.marginTop = '10px';
+
+            textOverlay.appendChild(descriptionP);
+            textOverlay.appendChild(creditP);
+        } else {
+            textOverlay.textContent = `Image ${i} Description`;
+        }
+
+        gridItem.appendChild(img);
+        gridItem.appendChild(textOverlay);
+        imageGrid.appendChild(gridItem);
+
+        // Add click event for expansion
+        gridItem.addEventListener('click', function() {
+            this.classList.toggle('expanded');
+            overlay.classList.toggle('active');
+        });
+    }
+
+    // Close expanded image when clicking overlay
+    overlay.addEventListener('click', function() {
+        const expanded = document.querySelector('.expanded');
+        if (expanded) {
+            expanded.classList.remove('expanded');
+            overlay.classList.remove('active');
+        }
+    });
+</script>
+</body>
+</html>
