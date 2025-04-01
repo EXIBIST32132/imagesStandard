@@ -56,21 +56,21 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 80vw;
-            max-height: 90vh;
+            width: 800px;
+            max-height: 600px;
             z-index: 100;
             background: white;
             border-radius: 8px;
-            overflow: hidden;
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
         }
 
         .expanded img {
             width: 100%;
-            height: auto;
-            max-height: 75vh;
+            height: 400px;
             object-fit: contain;
+            flex-shrink: 0;
         }
 
         .text-overlay {
@@ -89,6 +89,7 @@
             font-size: 1.2em;
             text-align: left;
             opacity: 1;
+            flex-shrink: 0;
         }
 
         .expanded .text-overlay::before {
