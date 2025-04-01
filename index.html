@@ -69,8 +69,7 @@
         .expanded img {
             width: 100%;
             height: auto;
-            min-height: 200px;
-            flex: 1 1 auto;
+            max-height: calc(100% - var(--text-height));
             object-fit: contain;
         }
 
@@ -90,8 +89,6 @@
             font-size: 1.2em;
             text-align: left;
             opacity: 1;
-            overflow-y: auto;
-            max-height: 400px;
         }
 
         .expanded .text-overlay::before {
@@ -370,47 +367,55 @@
 
         const img = document.createElement('img');
         img.src = `https://raw.githubusercontent.com/EXIBIST32132/imagesStandard/main/${i}.png`;
-        img.alt = `Image ${i}`;
+        gridItem.appendChild(img);
+
+        gridItem.addEventListener('click', () => expandImage(i));
+
+        imageGrid.appendChild(gridItem);
+    }
+
+    function expandImage(index) {
+        const gridItem = document.createElement('div');
+        gridItem.className = 'expanded';
+
+        const img = document.createElement('img');
+        img.src = `https://raw.githubusercontent.com/EXIBIST32132/imagesStandard/main/${index}.png`;
 
         const textOverlay = document.createElement('div');
         textOverlay.className = 'text-overlay';
 
-        // Create text content with proper formatting
-        if (imageTexts[i - 1]) {
-            const descriptionP = document.createElement('p');
-            descriptionP.textContent = imageTexts[i - 1].description;
-            descriptionP.style.marginBottom = '10px';
+        const description = document.createElement('p');
+        description.textContent = imageTexts[index - 1].description;
 
-            const creditP = document.createElement('p');
-            creditP.innerHTML = `<em>${imageTexts[i - 1].photoCredit}</em>`;
-            creditP.style.fontSize = '0.9em';
-            creditP.style.marginTop = '10px';
+        const credit = document.createElement('p');
+        credit.style.marginTop = '10px';
+        credit.style.fontSize = '0.9em';
+        credit.style.fontStyle = 'italic';
+        credit.textContent = imageTexts[index - 1].photoCredit;
 
-            textOverlay.appendChild(descriptionP);
-            textOverlay.appendChild(creditP);
-        } else {
-            textOverlay.textContent = `Image ${i} Description`;
-        }
+        textOverlay.appendChild(description);
+        textOverlay.appendChild(credit);
 
         gridItem.appendChild(img);
         gridItem.appendChild(textOverlay);
-        imageGrid.appendChild(gridItem);
 
-        // Add click event for expansion
-        gridItem.addEventListener('click', function() {
-            this.classList.toggle('expanded');
-            overlay.classList.toggle('active');
+        // Calculate text height and set it as a CSS variable
+        requestAnimationFrame(() => {
+            const textHeight = textOverlay.offsetHeight;
+            gridItem.style.setProperty('--text-height', textHeight + 'px');
         });
-    }
 
-    // Close expanded image when clicking overlay
-    overlay.addEventListener('click', function() {
-        const expanded = document.querySelector('.expanded');
-        if (expanded) {
-            expanded.classList.remove('expanded');
+        document.body.appendChild(gridItem);
+        overlay.classList.add('active');
+
+        const closeExpandedView = () => {
+            document.body.removeChild(gridItem);
             overlay.classList.remove('active');
-        }
-    });
+        };
+
+        overlay.onclick = closeExpandedView;
+        gridItem.onclick = closeExpandedView;
+    }
 </script>
 </body>
 </html>
