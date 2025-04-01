@@ -58,14 +58,17 @@
             overflow: auto;
             display: flex;
             flex-direction: column;
-            max-width: 560px;  
-            max-height: 540px; 
+            max-width: 560px;
+            max-height: 540px;
         }
         .expanded img {
-            width: 100%;
+            width: 70%;
             height: auto;
-            max-height: 70%;
+            max-height: calc(90% - var(--text-height, 0px));
             object-fit: contain;
+            margin: 0 auto;
+            display: block;
+            flex-shrink: 1;
         }
         .text-overlay {
             display: none;
@@ -83,16 +86,7 @@
             text-align: left;
             opacity: 1;
             overflow-y: auto;
-            flex-grow: 1;
-        }
-        .expanded .text-overlay::before {
-            content: '';
-            position: absolute;
-            left: 20px;
-            top: 15px;
-            height: 4px;
-            width: 40px;
-            background-color: #192b61;
+            min-height: fit-content;
         }
         .overlay {
             position: fixed;
@@ -375,15 +369,42 @@
         imageGrid.appendChild(gridItem);
         // Add click event for expansion
         gridItem.addEventListener('click', function() {
-            this.classList.toggle('expanded');
-            overlay.classList.toggle('active');
+            expandImage(img, imageTexts[i - 1]);
         });
+    }
+    function expandImage(img, text) {
+        const expandedContainer = document.createElement('div');
+        expandedContainer.className = 'expanded';
+        
+        const expandedImg = document.createElement('img');
+        expandedImg.src = img.src;
+        
+        const textOverlay = document.createElement('div');
+        textOverlay.className = 'text-overlay';
+        textOverlay.innerHTML = `<p>${text.description}</p><p><em>${text.photoCredit}</em></p>`;
+        
+        expandedContainer.appendChild(expandedImg);
+        expandedContainer.appendChild(textOverlay);
+        
+        // Calculate and set text height
+        requestAnimationFrame(() => {
+            const textHeight = textOverlay.offsetHeight;
+            expandedContainer.style.setProperty('--text-height', textHeight + 'px');
+        });
+        
+        document.body.appendChild(expandedContainer);
+        overlay.classList.add('active');
+        
+        overlay.onclick = () => {
+            expandedContainer.remove();
+            overlay.classList.remove('active');
+        };
     }
     // Close expanded image when clicking overlay
     overlay.addEventListener('click', function() {
         const expanded = document.querySelector('.expanded');
         if (expanded) {
-            expanded.classList.remove('expanded');
+            expanded.remove();
             overlay.classList.remove('active');
         }
     });
